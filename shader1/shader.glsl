@@ -18,6 +18,9 @@ uniform sampler2D texTex4;
 in vec2 out_texcoord;
 layout(location = 0) out vec4 out_color; // out_color must be written in order to see anything
 
+// A Bonzomatic shader made by viljokass.
+// A simple raymarcher with sphere, cube and some distortion.
+
 vec3 cameraPosition;
 vec3 lightPosition;
 
@@ -39,9 +42,9 @@ float sdfBox(vec3 p, vec3 b) {
 // Slap all drawables here
 float mapTheWorld(vec3 p) {
   float distortionMultiplier = clamp(-0.0f, 1.7f * sin(fGlobalTime * timeScale), 1.7f) * 5.0f;
-  float distortion = sin(distortionMultiplier * p.x) * sin(distortionMultiplier * p.y) * sin(distortionMultiplier * p.z) * .15f;
+  float distortion = sin(distortionMultiplier * p.x) * sin(distortionMultiplier * p.y) * sin(distortionMultiplier * p.z) * 0.15f;
   float sphereRad = 1.0f;
-  float sphere0 = sdfSphere(p - vec3(sin(fGlobalTime/7) * 3, 0.0f, 0.0f), sphereRad);
+  float sphere0 = sdfSphere(p - vec3(sin(timeScale*fGlobalTime/7) * 3, 0.0f, 0.0f), sphereRad);
   float cube0 = sdfBox(p - vec3(0.0f), vec3(0.4f, 0.4f, 1.5f));
   return (max(sphere0 + distortion, -cube0));
 }
@@ -78,7 +81,7 @@ vec3 calcShading(vec3 position, vec3 normal) {
 vec3 rayMarch(vec3 ro, vec3 rd) {
   
   float dTraveled = 0.0f;         // Distance travelled so far
-  const int STEPNUM = 32;         // Number of maximum steps
+  const int STEPNUM = 100;         // Number of maximum steps
   const float MAXDIST = 100.0f;  // Maximum distance for the ray to travel.
   
   for (int i = 0; i < STEPNUM; ++i) {
