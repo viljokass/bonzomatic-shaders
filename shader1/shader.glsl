@@ -132,6 +132,7 @@ void main(void)
   vec3 screen = vec3(uv, ro.z + 1.0f);
   vec3 rd = normalize(screen - ro);
   vec4 marchResult = vec4(rayMarch(ro, rd), 1);
+  vec4 outcolor = 
   
 	out_color = marchResult;                              // Output the color
 }

@@ -71,12 +71,12 @@ float sdfPacman(vec3 p, float r) {
 
 // A CSG SDF for a ball with a bunch of holes, for testing shadows
 float sdfShadowTestObject(vec3 p, float distortionMultip) {
-  float distortion = sin(distortionMultip*p.x) * sin(distortionMultip*p.y) * sin(distortionMultip*p.z) * 0.1;
+  float distortion = sin(distortionMultip*p.x) * sin(distortionMultip*p.y) * 0.1;
   
   float sphere0 = sdfSphere(p - vec3(0.0f), 1.0f);
-  float stick0 = sdfBox(p - vec3(0.0f), vec3(0.5f, 0.5f, 2.0f));
-  float stick1 = sdfBox(p - vec3(0.0f), vec3(0.5f, 2.0f, 0.5f));
-  float stick2 = sdfBox(p - vec3(0.0f), vec3(2.0f, 0.5f, 0.5f));
+  float stick0 = sdfBox(p - vec3(0.0f), vec3(0.4f, 0.4f, 2.0f));
+  float stick1 = sdfBox(p - vec3(0.0f), vec3(0.4f, 2.0f, 0.4f));
+  float stick2 = sdfBox(p - vec3(0.0f), vec3(2.0f, 0.4f, 0.4f));
   float stickCombo0 = unionCSG(stick0, stick1);
   float stickCombo1 = unionCSG(stick2, stickCombo0);
   float testObject0 = differenceCSG(sphere0, stickCombo1);
@@ -85,11 +85,10 @@ float sdfShadowTestObject(vec3 p, float distortionMultip) {
 
 // Slap all drawables here
 float mapTheWorld(vec3 p) {
-  float floor0 = sdfBox(p - vec3(0.0f, -7.0f, 0.0f), vec3(100.0f, 1.0f, 100.0f));
   float wall0 = sdfBox(p - vec3(0.0f, 3.0f, 11.0f), vec3(100.0f, 100.0f, 1.0f));
-  float limit = 0.758;
-  float testObject0 = sdfShadowTestObject(p - vec3(0.0f, 0.0f, 0.0f), clamp(-limit, sin(fGlobalTime * timeScale), limit) * 5.0f);
-  return unionCSG(testObject0, unionCSG(floor0, wall0));
+  float limit = 1;
+  float testObject0 = sdfShadowTestObject(p - vec3(0.0f, 0.0f, 0.0f), clamp(-limit, sin(fGlobalTime * timeScale), limit) * 25.0f);
+  return unionCSG(testObject0, wall0);
 }
 
 // Calculate distance from point to a surface
@@ -125,10 +124,10 @@ float fromStartToSurface(vec3 ro, vec3 rd) {
 }
 
 // Variables for lighting, light colours and such
-const float ambientStrength = 0.2f;
+const float ambientStrength = 0.4f;
 const vec3 ambientColor = vec3(1.0f, 1.0f, 1.0f);
-const vec3 lightColor = vec3(1.0f, 0.0f,  0.0f);
-const vec3 objectColor = vec3(1.0f, 1.0f, 1.0f);
+const vec3 lightColor = vec3(1.0f, 1.0f,  0.0f);
+const vec3 objectColor = vec3(1.0f, 0.0f, 1.0f);
 
 // Calculate shading for the object
 vec3 calcShading(vec3 position, vec3 normal) {
@@ -195,8 +194,8 @@ vec3 rayMarch(vec3 ro, vec3 rd) {
 void main(void)
 {
   // Should be self explanatory
-  cameraPosition = vec3(0.0f, 0.0f, -5.0f);
-  lightPosition = vec3(sin(fGlobalTime * timeScale/3), 0.0f, 0.0f);
+  cameraPosition = vec3(0.0f, 0.0f, -10.0f);
+  lightPosition = vec3(0.0f, 0.0f, sin(fGlobalTime * timeScale/2));
   
   // Set up everything for the raymarching and march the ray
   float aspectRatio = v2Resolution.x/v2Resolution.y;
