@@ -96,13 +96,13 @@ float mapTheWorld(vec3 p) {
 // Try to figure out a way to utilize this in the raymarching algorithm
 bool aHitFromPointToLight(vec3 ro, vec3 rd, float travelDistance) {
   
-  float dTraveled = 0.0f;        // Distance travelled so far
+  float dTraveled = 10.0f * EPSILON;        // Distance travelled so far
   const int STEPNUM = 64;         // Number of maximum steps
   
   for (int i = 0; i < STEPNUM; ++i) {
     
     // Set the current position on the ray
-    vec3 currentPosition = ro + (dTraveled + 10 * EPSILON) * rd;
+    vec3 currentPosition = ro + dTraveled * rd;
     
     // Calculate the SDFs
     float distanceToClosest = mapTheWorld(currentPosition);
