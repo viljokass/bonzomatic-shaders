@@ -94,40 +94,39 @@ float mapTheWorld(vec3 p) {
 // Calculate distance from point to a surface
 // Almost identical to raymarching function, but this time it returns a length travelled.
 // Try to figure out a way to utilize this in the raymarching algorithm
-float fromStartToSurface(vec3 ro, vec3 rd) {
+bool aHitFromPointToLight(vec3 ro, vec3 rd, float travelDistance) {
   
   float dTraveled = 0.0f;        // Distance travelled so far
-  const int STEPNUM = 64;       // Number of maximum steps
-  const float MAXDIST = 100.0f;  // Maximum distance for the ray to travel.
+  const int STEPNUM = 64;         // Number of maximum steps
   
   for (int i = 0; i < STEPNUM; ++i) {
     
     // Set the current position on the ray
-    vec3 currentPosition = ro + dTraveled * rd;
+    vec3 currentPosition = ro + (dTraveled + 10 * EPSILON) * rd;
     
     // Calculate the SDFs
     float distanceToClosest = mapTheWorld(currentPosition);
     
     // If a hit, then calculate normals and shading.
-    if (distanceToClosest < EPSILON) {
-      return dTraveled += distanceToClosest;
+    if (distanceToClosest < EPSILON/2) {
+      return true;
     }
     
     // If distance travelled has hit the limit, break the loop
-    if (dTraveled > MAXDIST) break;
+    if (dTraveled > travelDistance) break;
     
     // Otherwise, add results of the SDF to the travelled distance.
     dTraveled += distanceToClosest;
   }
   // If no hits are registered, return ambient color.
-  return 1.0 / 0.0;
+  return false;
 }
 
 // Variables for lighting, light colours and such
 const float ambientStrength = 0.4f;
-const vec3 ambientColor = vec3(1.0f, 1.0f, 1.0f);
+const vec3 ambientColor = vec3(0.0f, 1.0f, 0.0f);
 const vec3 lightColor = vec3(1.0f, 1.0f,  0.0f);
-const vec3 objectColor = vec3(1.0f, 0.0f, 1.0f);
+const vec3 objectColor = vec3(1.0f, 0.5f, 1.0f);
 
 // Calculate shading for the object
 vec3 calcShading(vec3 position, vec3 normal) {
@@ -135,8 +134,11 @@ vec3 calcShading(vec3 position, vec3 normal) {
   vec3 ambientLight = ambientColor * ambientStrength;
   
   // Calculate shadows
-  if (fromStartToSurface(lightPosition, normalize(position - lightPosition)) + 15 * EPSILON < length(position - lightPosition))
+  bool shadowHit = aHitFromPointToLight(position, normalize(lightPosition - position), length(lightPosition - position));
+  
+  if (shadowHit){
     return objectColor * ambientLight;
+  }
   
   vec3 dirToLight = normalize(lightPosition - position);
   vec3 diffuseLight = max(0.0f, dot(normal, dirToLight)) * lightColor;
@@ -195,7 +197,7 @@ void main(void)
 {
   // Should be self explanatory
   cameraPosition = vec3(0.0f, 0.0f, -10.0f);
-  lightPosition = vec3(0.0f, 0.0f, sin(fGlobalTime * timeScale/2));
+  lightPosition = vec3(0.0f, 0.0f, sin(fGlobalTime * timeScale/2)/ 4 - 1.0f);
   
   // Set up everything for the raymarching and march the ray
   float aspectRatio = v2Resolution.x/v2Resolution.y;
