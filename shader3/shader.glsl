@@ -69,17 +69,17 @@ mat2 rotate(float angle) {
 
 // Slap all drawables here
 float mapTheWorld(vec3 p) {
-  p -= vec3(sin(fGlobalTime)*0.2, cos(fGlobalTime)*0.1f, -fGlobalTime * 5);
+  p -= vec3(sin(fGlobalTime)*0.2, cos(fGlobalTime)*0.1f, fGlobalTime * 5);
   p.xy *= rotate(3*PI/2.0);
-  int kerroin = 1;
-  p = repeat(p, vec3(fftIntegrate * kerroin + 5, fftIntegrate * kerroin + 5,  5));
+  int kerroin = 0;
+  p = repeat(p, vec3(4.5));
   
   float sphere0 = sdfSphere(p - vec3(0.0f, 0.0f, 0.0f), 1.0f);
   float cube0 = sdfBox(p - vec3(1.0f, 1.0f, 0.0f), vec3(1.0f, 1.0f, 2.0f));
-  float sphereloc = fftIntegrate * 500 + 0.5f;
+  float sphereloc = fftIntegrate * kerroin + 0.5f;
   float sphere1 = sdfSphere(p - vec3(0.0f, -sphereloc, 0.0f), 0.2f);
   
-  return unionCSG(sphere1, differenceCSG(sphere0, sdfPrism(p - vec3(0.0, -0.6, 0.0), fftIntegrate * 2000 * 0.5, 0.6, 2)));
+  return unionCSG(sphere1, differenceCSG(sphere0, sdfPrism(p - vec3(0.0, -0.6, 0.0), fftIntegrate * 5000 * 0.5, 0.6, 2)));
 }
 
 // Calclulate the normal for the object
@@ -115,12 +115,14 @@ vec3 rayMarch(vec3 ro, vec3 rd) {
   
   float dTraveled = 0.0f;         // Distance travelled so far
   const int STEPNUM = 100;         // Number of maximum steps
-  const float MAXDIST = 100.0f;  // Maximum distance for the ray to travel.
+  const float MAXDIST = 250.0f;  // Maximum distance for the ray to travel.
   
   for (int i = 0; i < STEPNUM; ++i) {
     
     // Set the current position on the ray
     vec3 currentPosition = ro + dTraveled * rd;
+    
+    currentPosition.xy *= rotate(0.02*dTraveled);
     
     // Calculate the SDFs
     float distanceToClosest = mapTheWorld(currentPosition);
@@ -151,7 +153,7 @@ void main(void)
   // Integrate over FFT
   fftIntegrate = 0;
   float integrateStep = 1.0f/1024.0f;
-  for (int i = 0; i < 1025; ++i) {
+  for (int i = 0; i < 32; ++i) {
     fftIntegrate += texture(texFFTSmoothed, i * integrateStep).r;
   }
   fftIntegrate /= 1024;
@@ -165,9 +167,9 @@ void main(void)
   uv = gl_FragCoord.xy/v2Resolution - vec2(0.5f);
   uv.x = uv.x * aspectRatio;
   vec3 ro = cameraPosition;
-  vec3 screen = vec3(uv, ro.z + 1.0f);
+  vec3 screen = vec3(uv, ro.z + 2.0f);
   vec3 rd = normalize(screen - ro);
   vec4 marchResult = vec4(rayMarch(ro, rd), 1.0f);
   
-	out_color = marchResult;                              // Output the color
+	out_color = marchResult;  // Output the color
 }
