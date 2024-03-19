@@ -25,40 +25,46 @@ const float EPSILON = 0.001;
 vec3 cp;
 vec3 lp;
 vec2 uv;
-float fftIntegrate;
-
-float sdfSphere(vec3 p, float r) {
-  return length(p) - r;
-}
-
-float smin(float a, float b, float k ) {
-    k *= log(2.0);
-    float x = b-a;
-    return a + x/(1.0-exp2(x/k));
-}
 
 mat2 rotate(float a) {
   float s = sin(a);
   float c = cos(a);
-  return mat2(c, -s, s, c);
+  return mat2(c, -s, s, c);  
+}
+
+vec3 repeat(vec3 p, vec3 c) {
+  return mod(p, c) - 0.5*c;
+}
+
+float sdfBox(vec3 p, vec3 d) {
+  vec3 q = abs(p) - d;
+  return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);
+}
+
+float ncross(vec3 p, float s) {
+  p = repeat(p, vec3(s));
+  float sl = s/3;
+  float ll = s+0.1;
+  float stick0 = sdfBox(p, vec3(ll, sl, sl));
+  float stick1 = sdfBox(p, vec3(sl, ll, sl));
+  float stick2 = sdfBox(p, vec3(sl, sl, ll));
+  return min(min(stick0, stick1), stick2);
+}
+
+float pshape(vec3 p) {
+  float cube0 = sdfBox(p - vec3(0, 1, 0), vec3(1,2,1));
+  float cube1 = sdfBox(p - vec3(1, 0, 1), vec3(1));
+  float cube2 = sdfBox(p - vec3(-1, 1.65, 1), vec3(0.7));
+  float cube3 = sdfBox(p - vec3(-1.5, 0, 1.5), vec3(0.2, 1, 0.2));
+  return min( min(cube0, cube1), min(cube2, cube3));
 }
 
 float map(vec3 p) {
-  p.xz *= rotate(fGlobalTime/4);
-  vec3 s0loc = vec3( sin(fGlobalTime/2.2) * 3, 0.0, 0.0);
-  vec3 s1loc = vec3( 0.0, sin(fGlobalTime/1.43) * 2,  0.0);
-  vec3 s2loc = vec3( 0.0, cos(fGlobalTime/3.2) * 2.4,  0.0);
-  
-  float sphere0 = sdfSphere(p - s0loc, 0.3);
-  float sphere1 = sdfSphere(p - s1loc, 0.3);
-  float sphere2 = sdfSphere(p - s2loc, 0.3);
-  
-  float fftwc = fftIntegrate * 1500;
-  
-  float disturbance = sin(p.x * fftwc) * sin(p.y * fftwc) * sin(p.z * fftwc) * 0.18;
-  float textr = texture(texFFTSmoothed, abs(uv.x*uv.y*2)).r * 2;
-  
-  return smin(smin(sphere0, sphere1, 0.8), sphere2, 0.8) + disturbance + textr;
+  p.y += 1;
+  p.xz *= rotate(fGlobalTime/10);
+  float pshape = pshape(p);
+  float ncross = ncross(p - vec3(0, 0, 0), 0.33);  
+  return max(pshape, -ncross);
 }
 
 vec3 calcNormal(vec3 p) {
@@ -68,10 +74,10 @@ vec3 calcNormal(vec3 p) {
                         map(p + epvec.yyx) - map(p - epvec.yyx)));
 }
 
+vec3 lightColor = vec3(1.0f, 1.0f, 0.3f);
 float ambientStrength = 0.12;
-vec3 ambientColor = vec3(1.0, 1.0, 1.0);
-vec3 lightColor = vec3(0.5f, 0.7f, 1.0f);
-vec3 objectColor = vec3(0.3f, 0.3f, 0.8f);
+vec3 ambientColor = lightColor * ambientStrength;
+vec3 objectColor = vec3(1.0f, 1.0f, 1.0f);
 
 vec3 calcShading(vec3 p, vec3 n) {
   
@@ -90,7 +96,7 @@ vec3 calcShading(vec3 p, vec3 n) {
 
 vec3 raymarch(vec3 ro, vec3 rd) {
   const float MAXDIST = 250;
-  const float MAXSTEPS = 64;
+  const float MAXSTEPS = 250;
   
   float dist = 0.0f;
   
@@ -110,21 +116,10 @@ vec3 raymarch(vec3 ro, vec3 rd) {
     dist += dtc;
     
   }
-  float intens = texture(texFFTSmoothed, abs(uv.x * uv.y * 2)).r * 100;
-  float sp = sin(fGlobalTime)/2 + 0.5;
-  float cp = cos(fGlobalTime)/2 + 0.5;
-  return vec3(cp + intens, intens * 0.5 * sp, sp) * ambientStrength;
+  return ambientColor;
 }
 
 void main(void){
-  
-  float integrateStep = 1/1024;
-  float integrateCount = 32;
-  for (int i = 0; i < integrateCount; ++i) {
-    fftIntegrate += texture(texFFTSmoothed, i * integrateStep).r;
-  }
-  fftIntegrate /= integrateCount;
-  
   // CAMERA POSITION
   cp = vec3(0.0, 0.0, -8.0);
   // LIGHT POSITION
