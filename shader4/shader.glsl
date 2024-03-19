@@ -102,7 +102,8 @@ vec3 raymarch(vec3 ro, vec3 rd) {
     dist += dtc;
     
   }
-  return rd * ambientStrength;
+  float intens = texture(texFFTSmoothed, abs(uv.x * uv.y)).r * 100;
+  return vec3(intens, intens*0.5, 1) * ambientStrength;
 }
 
 void main(void){
