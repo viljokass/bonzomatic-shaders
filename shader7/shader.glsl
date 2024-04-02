@@ -21,10 +21,12 @@ layout(location = 0) out vec4 out_color; // out_color must be written in order t
 const float MAX_D = 100.0;
 const float EPSILON = 0.001;
 const int MAX_ITER = 100;
+const float PI = 3.1415;
 
 struct Surface {
   float sdv;
   vec3 col;
+  vec2 uv;
 };
 
 mat2 rotate(float a) {
@@ -35,7 +37,9 @@ mat2 rotate(float a) {
 
 Surface sphere(vec3 p, float r, vec3 offset, vec3 col) {
   float d = length(p - offset) - r;
-  return Surface(d, col);
+  vec3 pn = normalize(p - offset);
+  vec2 uv = vec2(0.5 + atan(pn.z, pn.x)/(2*PI), 0.5 + asin(pn.y)/PI);
+  return Surface(d, col, uv);
 }
 
 Surface minWithColor(Surface o1, Surface o2) {
@@ -44,10 +48,10 @@ Surface minWithColor(Surface o1, Surface o2) {
 }
 
 Surface map(vec3 p) {
-  p.xy *= rotate(fGlobalTime);
-  Surface s1 = sphere(p, 1., vec3(-1.5, -0.7, 0), vec3(1, 0, 0));
-  Surface s2 = sphere(p, 1., vec3(1.5, -0.7, 0), vec3(0, 1, 0));
-  Surface s3 = sphere(p, 1., vec3(0, 1.8, 0), vec3(0, 0, 1));
+  p.xz *= rotate(sin(fGlobalTime) * PI);
+  Surface s1 = sphere(p, 1., vec3(-1.5, -0.7, 0), vec3(1, 0.5, 0.5));
+  Surface s2 = sphere(p, 1., vec3(1.5, -0.7, 0), vec3(0.5, 1, 0.5));
+  Surface s3 = sphere(p, 1., vec3(0, 1.8, 0), vec3(0.5, 0.5, 1));
   return minWithColor(minWithColor(s1, s2), s3);
 }
 
@@ -60,12 +64,12 @@ vec3 cnorm(vec3 p) {
   ));
 }
 
-vec3 lpos = vec3(0, 0, sin(fGlobalTime)*2);
+vec3 lpos = vec3(0, 0, -3);
 
-vec3 shade(vec3 p, vec3 n, vec3 col) {
+vec3 shade(vec3 p, vec3 n, Surface obj) {
   vec3 dtl = normalize(lpos - p);
   float diffs = max(dot(dtl, n), 0.0);
-  return col * diffs;
+  return vec3(texture(texTex1, obj.uv)) * obj.col * diffs;
 }
 
 vec3 raymarch(vec3 ro, vec3 rd) {
@@ -78,7 +82,7 @@ vec3 raymarch(vec3 ro, vec3 rd) {
     
     if (dtc < EPSILON) {
       vec3 n = cnorm(p);
-      return shade(p, n, obj.col);
+      return shade(p, n, obj);
     }
     
     if (d > MAX_D) break;
