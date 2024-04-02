@@ -72,7 +72,7 @@ float mapTheWorld(vec3 p) {
   p -= vec3(sin(fGlobalTime)*0.2, cos(fGlobalTime)*0.1f, fGlobalTime * 5);
   p.xy *= rotate(3*PI/2.0);
   int kerroin = 0;
-  p = repeat(p, vec3(4.5));
+  p = repeat(p, vec3(6));
   
   float sphere0 = sdfSphere(p - vec3(0.0f, 0.0f, 0.0f), 1.0f);
   float cube0 = sdfBox(p - vec3(1.0f, 1.0f, 0.0f), vec3(1.0f, 1.0f, 2.0f));
@@ -123,6 +123,9 @@ vec3 rayMarch(vec3 ro, vec3 rd) {
     vec3 currentPosition = ro + dTraveled * rd;
     
     currentPosition.xy *= rotate(.013*dTraveled);
+    
+    currentPosition.x += sin(dTraveled/14);
+    currentPosition.y += cos(dTraveled/14);
     
     // Calculate the SDFs
     float distanceToClosest = mapTheWorld(currentPosition);
