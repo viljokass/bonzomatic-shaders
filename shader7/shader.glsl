@@ -18,13 +18,54 @@ uniform sampler2D texTex4;
 in vec2 out_texcoord;
 layout(location = 0) out vec4 out_color; // out_color must be written in order to see anything
 
-
 const float MAX_D = 100.0;
 const float EPSILON = 0.001;
 const int MAX_ITER = 100;
 
-float map(vec3 p) {
-  return length(p) - (sin(fGlobalTime) + 2) / 4;
+struct Surface {
+  float sdv;
+  vec3 col;
+};
+
+mat2 rotate(float a) {
+  float s = sin(a);
+  float c = cos(a);
+  return mat2(c, -s, s, c);
+}
+
+Surface sphere(vec3 p, float r, vec3 offset, vec3 col) {
+  float d = length(p - offset) - r;
+  return Surface(d, col);
+}
+
+Surface minWithColor(Surface o1, Surface o2) {
+  if (o2.sdv < o1.sdv) return o2;
+  return o1;
+}
+
+Surface map(vec3 p) {
+  p.xy *= rotate(fGlobalTime);
+  Surface s1 = sphere(p, 1., vec3(-1.5, -0.7, 0), vec3(1, 0, 0));
+  Surface s2 = sphere(p, 1., vec3(1.5, -0.7, 0), vec3(0, 1, 0));
+  Surface s3 = sphere(p, 1., vec3(0, 1.8, 0), vec3(0, 0, 1));
+  return minWithColor(minWithColor(s1, s2), s3);
+}
+
+vec3 cnorm(vec3 p) {
+  vec2 delta = vec2(EPSILON, 0);
+  return normalize(vec3(
+    map(p + delta.xyy).sdv - map(p - delta.xyy).sdv,
+    map(p + delta.yxy).sdv - map(p - delta.yxy).sdv,
+    map(p + delta.yyx).sdv - map(p - delta.yyx).sdv
+  ));
+}
+
+vec3 lpos = vec3(0, 0, sin(fGlobalTime)*2);
+
+vec3 shade(vec3 p, vec3 n, vec3 col) {
+  vec3 dtl = normalize(lpos - p);
+  float diffs = max(dot(dtl, n), 0.0);
+  return col * diffs;
 }
 
 vec3 raymarch(vec3 ro, vec3 rd) {
@@ -32,10 +73,12 @@ vec3 raymarch(vec3 ro, vec3 rd) {
   
   for (int i = 0; i < MAX_ITER; ++i) {
     vec3 p = ro + d * rd;
-    float dtc = map(p);
+    Surface obj = map(p);
+    float dtc = obj.sdv;
     
     if (dtc < EPSILON) {
-      return vec3(1);
+      vec3 n = cnorm(p);
+      return shade(p, n, obj.col);
     }
     
     if (d > MAX_D) break;
@@ -47,7 +90,7 @@ vec3 raymarch(vec3 ro, vec3 rd) {
 
 void main(void)
 {
-  vec2 uv = gl_FragCoord.xy/v2Resolution - vec2(0.5);
+  vec2 uv = gl_FragCoord.xy/v2Resolution * 2 - vec2(1);
   uv.x *= v2Resolution.x/v2Resolution.y;
   vec3 ro = vec3(0, 0, -4);
   vec3 screen = vec3(uv, ro.z + 1);
