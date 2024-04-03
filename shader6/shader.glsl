@@ -16,7 +16,7 @@ uniform sampler2D texTex3;
 uniform sampler2D texTex4;
 
 const int MAX_ITER = 250;
-const float MAX_DIST = 500.0;
+const float MAX_DIST = 300.0;
 const float EPSILON = 0.001;
 const float PI = 3.1415;
 
@@ -65,15 +65,16 @@ vec3 cnorm(vec3 p) {
 vec3 raymarch(vec3 ro, vec3 rd) {
   
   float d = 0.0;
+  int i = 0;
   
-  for (int i = 0; i < MAX_ITER; ++i) {
+  for (i; i < MAX_ITER; ++i) {
     
     vec3 p = ro + d * rd;
     
-    p.y += sin(d/10);
-    p.x += cos(d/10);
+    p.y += sin(d/10) * 2;
+    p.x += cos(d/10) * 2;
     
-    p.xy *= rotate(d/250*sin(fGlobalTime/10));
+    p.xy *= rotate(d/(MAX_DIST*pow(sin(fGlobalTime/10), 1)));
 
     float dtc = map(p);
     
@@ -86,7 +87,7 @@ vec3 raymarch(vec3 ro, vec3 rd) {
     
     d += dtc;
   }
-  return vec3(0);
+  return vec3(0.1, 0.9, 0.9) * float(i)/(MAX_ITER/2);
 }
 
 void main(void)
