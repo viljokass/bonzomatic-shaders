@@ -38,9 +38,10 @@ mat2 rotate(float a) {
 }
 
 float map(vec3 p) {
-  p.z += fGlobalTime * 20;
+  p.xz *= rotate(sin(fGlobalTime/10)/5);
+  p.z += fGlobalTime * 10;
   p.xy *= rotate(sin(fGlobalTime/40));
-  p = repeat(p, vec3(8 + sin(fGlobalTime), 8 + sin(fGlobalTime), 4));
+  p = repeat(p, vec3(8, 8, 5));
   return sphere(p, 1.0);
 }
 
@@ -71,8 +72,8 @@ vec3 raymarch(vec3 ro, vec3 rd) {
     
     vec3 p = ro + d * rd;
     
-    p.y += sin(d/10) * 2;
-    p.x += cos(d/10) * 2;
+    p.y += sin(d/10) * (2 + sin(fGlobalTime/4)/2);
+    p.x += cos(d/10) * (2 + sin(fGlobalTime/4)/2);
     
     p.xy *= rotate(d/(MAX_DIST*0.3));
 
