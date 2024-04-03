@@ -38,21 +38,23 @@ mat2 rotate(float a) {
 Surface sphere(vec3 p, float r, vec3 offset, vec3 col) {
   float d = length(p - offset) - r;
   vec3 pn = normalize(p - offset);
-  vec2 uv = vec2(0.5 + atan(pn.z, pn.x)/(2*PI), 0.5 + asin(pn.y)/PI);
+  vec2 uv = vec2(fGlobalTime/3 + atan(pn.z, pn.x)/(2*PI), fGlobalTime/3 + asin(pn.y)/PI);
   return Surface(d, col, uv);
 }
 
-Surface minWithColor(Surface o1, Surface o2) {
+Surface surfaceMin(Surface o1, Surface o2) {
   if (o2.sdv < o1.sdv) return o2;
   return o1;
 }
 
 Surface map(vec3 p) {
-  p.xz *= rotate(sin(fGlobalTime) * PI);
-  Surface s1 = sphere(p, 1., vec3(-1.5, -0.7, 0), vec3(1, 0.5, 0.5));
-  Surface s2 = sphere(p, 1., vec3(1.5, -0.7, 0), vec3(0.5, 1, 0.5));
-  Surface s3 = sphere(p, 1., vec3(0, 1.8, 0), vec3(0.5, 0.5, 1));
-  return minWithColor(minWithColor(s1, s2), s3);
+  p.y += sin(fGlobalTime * 2)/3;
+  p.x += cos(fGlobalTime * 2)/3;
+  p.xz *= rotate(sin(fGlobalTime)/10);
+  Surface s1 = sphere(p, 1., vec3(-1.5, -0.7, 0), vec3(1, 1, 0.3));
+  Surface s2 = sphere(p, 1., vec3(1.5, -0.7, 0), vec3(0.3, 1, 1));
+  Surface s3 = sphere(p, 1., vec3(0, 1.8, 0), vec3(1, 0.3, 1));
+  return surfaceMin(surfaceMin(s1, s2), s3);
 }
 
 vec3 cnorm(vec3 p) {
@@ -69,7 +71,7 @@ vec3 lpos = vec3(0, 0, -3);
 vec3 shade(vec3 p, vec3 n, Surface obj) {
   vec3 dtl = normalize(lpos - p);
   float diffs = max(dot(dtl, n), 0.0);
-  return vec3(texture(texTex1, obj.uv)) * obj.col * diffs;
+  return texture(texNoise, obj.uv).xyz * obj.col * diffs;
 }
 
 vec3 raymarch(vec3 ro, vec3 rd) {
