@@ -15,7 +15,7 @@ uniform sampler2D texTex2;
 uniform sampler2D texTex3;
 uniform sampler2D texTex4;
 
-const int MAX_ITER = 250;
+const int MAX_ITER = 350;
 const float MAX_DIST = 300.0;
 const float EPSILON = 0.001;
 const float PI = 3.1415;
@@ -38,9 +38,9 @@ mat2 rotate(float a) {
 }
 
 float map(vec3 p) {
-  p.z += fGlobalTime * 10;
+  p.z += fGlobalTime * 20;
   p.xy *= rotate(sin(fGlobalTime/40));
-  p = repeat(p, vec3(8, 8, 5));
+  p = repeat(p, vec3(8 + sin(fGlobalTime), 8 + sin(fGlobalTime), 4));
   return sphere(p, 1.0);
 }
 
@@ -74,7 +74,7 @@ vec3 raymarch(vec3 ro, vec3 rd) {
     p.y += sin(d/10) * 2;
     p.x += cos(d/10) * 2;
     
-    p.xy *= rotate(d/(MAX_DIST*pow(sin(fGlobalTime/10), 1)));
+    p.xy *= rotate(d/(MAX_DIST*0.3));
 
     float dtc = map(p);
     
