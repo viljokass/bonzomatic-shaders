@@ -19,6 +19,7 @@ const int MAX_ITER = 350;
 const float MAX_DIST = 300.0;
 const float EPSILON = 0.001;
 const float PI = 3.1415;
+float fftInt = 0.0;
 
 in vec2 out_texcoord;
 layout(location = 0) out vec4 out_color; // out_color must be written in order to see anything
@@ -38,11 +39,12 @@ mat2 rotate(float a) {
 }
 
 float map(vec3 p) {
+  
   p.xz *= rotate(sin(fGlobalTime/10)/5);
   p.z += fGlobalTime * 10;
   p.xy *= rotate(sin(fGlobalTime/40));
   p = repeat(p, vec3(8, 8, 5));
-  return sphere(p, 1.0);
+  return sphere(p, 1.0 + fftInt * 250);
 }
 
 vec3 lpos = vec3(0);
@@ -52,7 +54,7 @@ vec3 shade(vec3 p, vec3 n, float d, float i) {
   i /= MAX_ITER/2;
   vec3 dtl = normalize(lpos - p);
   float diffs = dot(dtl, n);
-  return vec3(d, 0.5 * d, 5 * i) * diffs;
+  return vec3(1, 1-d, i) * diffs;
 }
 
 vec3 cnorm(vec3 p) {
@@ -88,11 +90,17 @@ vec3 raymarch(vec3 ro, vec3 rd) {
     
     d += dtc;
   }
-  return vec3(0.1, 0.9, 0.9) * float(i)/(MAX_ITER/2);
+  return vec3(0.1, 0.4, 0.9) * float(i)/(MAX_ITER/2);
 }
 
 void main(void)
 {
+  int amnt = 1024;
+  float div = 1/amnt;
+  for (int i = 0; i < amnt; ++i) {
+    fftInt += texture(texFFTSmoothed, i*div).r;
+  }
+  fftInt /= amnt;
   vec2 uv = gl_FragCoord.xy/v2Resolution - vec2(0.5);
   uv.x *= v2Resolution.x/v2Resolution.y;
   
