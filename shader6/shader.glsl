@@ -104,7 +104,7 @@ void main(void)
   vec2 uv = gl_FragCoord.xy/v2Resolution - vec2(0.5);
   uv.x *= v2Resolution.x/v2Resolution.y;
   
-  float k = clamp(-1, 1 - fftInt * 100, 1);
+  float k = clamp(-0.5, 1 - fftInt * 100, 1);
   
   float res = 256 * k;
   float cold = 8 * k;
@@ -114,7 +114,7 @@ void main(void)
   
   if ( k < 0 ) {
     uv.y *= -1;
-    out_color = round(texture(texChecker, uv)*cold)/cold;
+    out_color = round(texture(texTex3, uv)*cold)/cold + vec4(vec3(texture(texFFT, abs(uv.x * uv.y)).r * 100, 0, 0), 1);
     return;
   }
   
