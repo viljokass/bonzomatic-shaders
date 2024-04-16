@@ -43,8 +43,8 @@ float map(vec3 p) {
   p.xz *= rotate(sin(fGlobalTime/10)/5);
   p.z += fGlobalTime * 10;
   p.xy *= rotate(sin(fGlobalTime/40));
-  p = repeat(p, vec3(8, 8, 5));
-  return sphere(p, 1.0 + fftInt * 250);
+  p = repeat(p, vec3(10, 10, 5));
+  return sphere(p, 1.0 + fftInt * 200);
 }
 
 vec3 lpos = vec3(0);
@@ -104,17 +104,24 @@ void main(void)
   vec2 uv = gl_FragCoord.xy/v2Resolution - vec2(0.5);
   uv.x *= v2Resolution.x/v2Resolution.y;
   
-  float k = 400;
+  float k = clamp(-1, 1 - fftInt * 100, 1);
   
-  uv.x = round(uv.x * k)/k;
-  uv.y = round(uv.y * k)/k;
+  float res = 256 * k;
+  float cold = 8 * k;
+  
+  uv.x = round(uv.x * res)/res;
+  uv.y = round(uv.y * res)/res;
+  
+  if ( k < 0 ) {
+    uv.y *= -1;
+    out_color = round(texture(texChecker, uv)*cold)/cold;
+    return;
+  }
   
   vec3 ro = vec3(0, 0, -3);
   vec3 screen = vec3(uv, ro.z + 1);
   vec3 rd = normalize(screen - ro);
-  vec3 col = raymarch(ro, rd);
+  vec4 col = vec4(raymarch(ro, rd), 1);
   
-  float cold = 2;
-  
-	out_color = vec4(round(col * 4)/4, 1);
+	out_color = round(col * cold)/cold;
 }
