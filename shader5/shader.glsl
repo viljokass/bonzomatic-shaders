@@ -128,9 +128,16 @@ void main(void){
   uv = gl_FragCoord.xy/v2Resolution - vec2(0.5f);
   float ar = v2Resolution.x/v2Resolution.y;
   uv.x *= ar;
+  float res = 250;
+  uv.x = round(uv.x*res)/res;
+  uv.y = round(uv.y*res)/res;
+  
+  
   vec3 screen = vec3(uv, cp.z + 1.0f);
   vec3 rayDir = normalize(screen - cp);
   vec3 marchResult = raymarch(cp, rayDir);
   
-  out_color = vec4(marchResult, 1.0);
+  float cdepth = 6;
+  
+  out_color = vec4(round(marchResult * cdepth)/cdepth, 1.0);
 }

@@ -96,10 +96,17 @@ void main(void)
   vec2 uv = gl_FragCoord.xy/v2Resolution - vec2(0.5);
   uv.x *= v2Resolution.x/v2Resolution.y;
   
+  float k = 400;
+  
+  uv.x = round(uv.x * k)/k;
+  uv.y = round(uv.y * k)/k;
+  
   vec3 ro = vec3(0, 0, -3);
   vec3 screen = vec3(uv, ro.z + 1);
   vec3 rd = normalize(screen - ro);
   vec3 col = raymarch(ro, rd);
   
-	out_color = vec4(col, 1);
+  float cold = 2;
+  
+	out_color = vec4(round(col * 4)/4, 1);
 }
